@@ -62,14 +62,24 @@ app.listen(3000, () => {
 ///// ROUTES /////
 
 // app.get('/test', (req, res) => {
-//   res.json("test: working!")
+//   function callback(error, response, body) {
+//       if (!error && response.statusCode == 200) {
+//         res.json(JSON.parse(body));
+//       }
+//   }
+//
+//   const options = {
+//       url: `https://maps.googleapis.com/maps/api/directions/json?origin=General%20Assembly%20Sydney&destination=Bondi%20Beach&mode=transit&key=AIzaSyBND5ksDpE8U7IRPTOobQXYIwGckHeYxRs`
+//   };
+//
+//   request(options, callback)
 // });
-
-app.get('/users', (req, res) => {
-  db.collection('users').find().toArray((err, results) => {
-    res.json(results);
-  });
-});
+//
+// app.get('/users', (req, res) => {
+//   db.collection('users').find().toArray((err, results) => {
+//     res.json(results);
+//   });
+// });
 
 const TRIP_PLANNER_BASE = 'https://api.transport.nsw.gov.au/v1/tp'
 const API_KEY = 'qyyB5ajjPGdUAXbZaELGqwpgWr03VFiQ579m'
@@ -96,29 +106,28 @@ app.get('/stop/:id', (req, res) => {
 
 // API PROXY GET trip planner
 
-app.get('/searchtrip/:originlat/:originlon/:destinationlat/:destinationlon' , (req, res) => {
+app.get('/searchtrip/:originId/:destinationId' , (req, res) => {
 
   const {
-    originlat,
-    originlon,
-    destinationlat,
-    destinationlon
+    originId,
+    destinationId,
   } = req.params
 
-  const headers = {
-      'Accept': 'application/json',
-      'Authorization': 'apikey qyyB5ajjPGdUAXbZaELGqwpgWr03VFiQ579m'
+
+  var headers = {
+    'Accept': 'application/json',
+    'Authorization': 'apikey qyyB5ajjPGdUAXbZaELGqwpgWr03VFiQ579m'
   };
 
-  const options = {
-      url: `${TRIP_PLANNER_BASE}/trip?outputFormat=rapidJSON&coordOutputFormat=EPSG%3A4326&depArrMacro=dep&type_origin=coord&name_origin=${originlon}%3A${originlat}%3AEPSG%3A4326&type_destination=coord&name_destination=${destinationlon}%3A${destinationlat}%3AEPSG%3A4326&calcNumberOfTrips=6&TfNSWTR=true&version=10.2.1.42`,
-      headers: headers
+  var options = {
+    url: `${TRIP_PLANNER_BASE}/trip?outputFormat=rapidJSON&coordOutputFormat=EPSG%3A4326&depArrMacro=dep&type_origin=any&name_origin=${originId}&type_destination=any&name_destination=${destinationId}&calcNumberOfTrips=6&TfNSWTR=true&version=10.2.1.42`,
+    headers: headers
   };
 
   function callback(error, response, body) {
-      if (!error && response.statusCode == 200) {
-        res.json(JSON.parse(body));
-      }
+    if (!error && response.statusCode == 200) {
+      res.json(JSON.parse(body));
+    }
   }
 
   request(options, callback);
