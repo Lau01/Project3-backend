@@ -62,24 +62,31 @@ app.listen(3000, () => {
 ///// ROUTES /////
 
 // app.get('/test', (req, res) => {
+//   var headers = {
+//       'Accept': 'application/json',
+//       'Authorization': 'apikey qyyB5ajjPGdUAXbZaELGqwpgWr03VFiQ579m'
+//   };
+//
+//   var options = {
+//       url: 'https://api.transport.nsw.gov.au/v1/tp/trip?outputFormat=rapidJSON&coordOutputFormat=EPSG%3A4326&depArrMacro=dep&type_origin=any&name_origin=%22streetID%3A10031%3A21%3A95304004%3A-1%3APrincess%20St%3ALidcombe%3APrincess%20St%3A%3APrincess%20St%3A%3AANY%3ADIVA_SINGLEHOUSE%3A4875112%3A3754055%3AGDAV%3Answ%22&type_destination=any&name_destination=10101100&calcNumberOfTrips=6&TfNSWTR=true&version=10.2.1.42',
+//       headers: headers
+//   };
+//
 //   function callback(error, response, body) {
 //       if (!error && response.statusCode == 200) {
 //         res.json(JSON.parse(body));
 //       }
 //   }
 //
-//   const options = {
-//       url: `https://maps.googleapis.com/maps/api/directions/json?origin=General%20Assembly%20Sydney&destination=Bondi%20Beach&mode=transit&key=AIzaSyBND5ksDpE8U7IRPTOobQXYIwGckHeYxRs`
-//   };
+//   request(options, callback);
 //
-//   request(options, callback)
 // });
 //
-// app.get('/users', (req, res) => {
-//   db.collection('users').find().toArray((err, results) => {
-//     res.json(results);
-//   });
-// });
+app.get('/users', (req, res) => {
+  db.collection('users').find().toArray((err, results) => {
+    res.json(results);
+  });
+});
 
 const TRIP_PLANNER_BASE = 'https://api.transport.nsw.gov.au/v1/tp'
 const API_KEY = 'qyyB5ajjPGdUAXbZaELGqwpgWr03VFiQ579m'
@@ -106,22 +113,15 @@ app.get('/stop/:id', (req, res) => {
 
 // API PROXY GET trip planner
 
-app.get('/searchtrip/:originId/:destinationId' , (req, res) => {
+app.get('/searchtrip/:origin/:destination' , (req, res) => {
 
   const {
-    originId,
-    destinationId,
+    origin,
+    destination,
   } = req.params
 
-
-  var headers = {
-    'Accept': 'application/json',
-    'Authorization': 'apikey qyyB5ajjPGdUAXbZaELGqwpgWr03VFiQ579m'
-  };
-
-  var options = {
-    url: `${TRIP_PLANNER_BASE}/trip?outputFormat=rapidJSON&coordOutputFormat=EPSG%3A4326&depArrMacro=dep&type_origin=any&name_origin=${originId}&type_destination=any&name_destination=${destinationId}&calcNumberOfTrips=6&TfNSWTR=true&version=10.2.1.42`,
-    headers: headers
+  const options = {
+    url: `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&mode=transit&alternatives=true&region=au&key=AIzaSyBND5ksDpE8U7IRPTOobQXYIwGckHeYxRs`,
   };
 
   function callback(error, response, body) {
@@ -133,6 +133,7 @@ app.get('/searchtrip/:originId/:destinationId' , (req, res) => {
   request(options, callback);
 
 })
+
 // app.get('/searchtrip/:originlat/:originlon/:destinationlat/:destinationlon', (req, res) => {
 //
 //
@@ -155,6 +156,26 @@ app.get('/searchtrip/:originId/:destinationId' , (req, res) => {
 //   request(options, callback);
 //
 // })
+
+app.get('/planner/:originid/:destinationid', (req, res) => {
+  const headers = {
+      'Accept': 'application/json',
+      'Authorization': 'apikey qyyB5ajjPGdUAXbZaELGqwpgWr03VFiQ579m'
+  };
+  const options = {
+      url: `https://api.transport.nsw.gov.au/v1/tp/trip?outputFormat=rapidJSON&coordOutputFormat=EPSG%3A4326&depArrMacro=dep&type_origin=any&name_origin=${req.params.originid}&type_destination=any&name_destination=${req.params.destinationid}&calcNumberOfTrips=6&TfNSWTR=true&version=10.2.1.42`,
+      headers: headers
+  };
+
+  function callback(error, response, body) {
+      if (!error && response.statusCode == 200) {
+        res.json(JSON.parse(body));
+      }
+  }
+
+  request(options, callback);
+
+});
 
 // Signing up new user
 app.post('/users', (req, res) => {
