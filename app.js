@@ -1,58 +1,38 @@
 const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
-const expressValidator = require('express-validator');
-const { check } = require('express-validator/check');
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
+// const expressValidator = require('express-validator');
+// const { check } = require('express-validator/check');
+// const passport = require('passport');
+// const LocalStrategy = require('passport-local').Strategy;
 const mongo = require('mongodb');
 const mongoose = require('mongoose');
-const users = require('./routes/users');
+// const users = require('./routes/users');
 const cors = require('cors');
 const app = express();
 const request = require('request');
+const bcrypt = require('bcryptjs');
+
+// const User = require('./models/users');
+const user = require('./routes/user');
 
 // const proxy = require('express-http-proxy');
 
-const User = require('./models/users');
-
 mongoose.connect('mongodb://127.0.0.1:27017/trip-planner', {useNewUrlParser: true});
 mongoose.connection.on('error', error => console.log(error) );
-mongoose.Promise = global.Promise;
+// mongoose.Promise = global.Promise;
 
 const db = mongoose.connection;
 
-
-// did not include express session
-//////// MIDDLEWARE
-
-// app.use(expressValidator({
-//   errorFormatter: function(param, msg, value) {
-//       var namespace = param.split('.')
-//       , root    = namespace.shift()
-//       , formParam = root;
-//
-//     while(namespace.length) {
-//       formParam += '[' + namespace.shift() + ']';
-//     }
-//     return {
-//       param : formParam,
-//       msg   : msg,
-//       value : value
-//     };
-//   }
-// }));
-
-app.use(passport.initialize());
-app.use(passport.session());
-
 app.use(cors());
 
-app.use(expressValidator());
+// app.use(expressValidator());
 
-app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
-//////////////
+app.use(bodyParser.json());
+
+app.use('/user', user);
+////////////// MIDDLEWARE END
 
 // listen on port 3000
 app.listen(3000, () => {
@@ -60,29 +40,7 @@ app.listen(3000, () => {
 });
 
 ///// ROUTES /////
-
-// app.get('/test', (req, res) => {
-//   var headers = {
-//       'Accept': 'application/json',
-//       'Authorization': 'apikey qyyB5ajjPGdUAXbZaELGqwpgWr03VFiQ579m'
-//   };
-//
-//   var options = {
-//       url: 'https://api.transport.nsw.gov.au/v1/tp/trip?outputFormat=rapidJSON&coordOutputFormat=EPSG%3A4326&depArrMacro=dep&type_origin=any&name_origin=%22streetID%3A10031%3A21%3A95304004%3A-1%3APrincess%20St%3ALidcombe%3APrincess%20St%3A%3APrincess%20St%3A%3AANY%3ADIVA_SINGLEHOUSE%3A4875112%3A3754055%3AGDAV%3Answ%22&type_destination=any&name_destination=10101100&calcNumberOfTrips=6&TfNSWTR=true&version=10.2.1.42',
-//       headers: headers
-//   };
-//
-//   function callback(error, response, body) {
-//       if (!error && response.statusCode == 200) {
-//         res.json(JSON.parse(body));
-//       }
-//   }
-//
-//   request(options, callback);
-//
-// });
-//
-app.get('/users', (req, res) => {
+app.get('/showusers', (req, res) => {
   db.collection('users').find().toArray((err, results) => {
     res.json(results);
   });
@@ -91,7 +49,7 @@ app.get('/users', (req, res) => {
 const TRIP_PLANNER_BASE = 'https://api.transport.nsw.gov.au/v1/tp'
 const API_KEY = 'qyyB5ajjPGdUAXbZaELGqwpgWr03VFiQ579m'
 
-// API PROXY GET stops
+// TRIP PLANNER API PROXY GET stops
 app.get('/stop/:id', (req, res) => {
   const headers = {
       'Accept': 'application/json',
@@ -113,27 +71,29 @@ app.get('/stop/:id', (req, res) => {
 
 // API PROXY GET trip planner
 
-app.get('/searchtrip/:origin/:destination' , (req, res) => {
+// GOOGLE MAPS SEARCH TRIP CODE
+// app.get('/searchtrip/:origin/:destination' , (req, res) => {
+//
+//   const {
+//     origin,
+//     destination,
+//   } = req.params
+//
+//   const options = {
+//     url: `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&mode=transit&alternatives=true&region=au&key=AIzaSyBND5ksDpE8U7IRPTOobQXYIwGckHeYxRs`,
+//   };
+//
+//   function callback(error, response, body) {
+//     if (!error && response.statusCode == 200) {
+//       res.json(JSON.parse(body));
+//     }
+//   }
+//
+//   request(options, callback);
+//
+// })
 
-  const {
-    origin,
-    destination,
-  } = req.params
-
-  const options = {
-    url: `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&mode=transit&alternatives=true&region=au&key=AIzaSyBND5ksDpE8U7IRPTOobQXYIwGckHeYxRs`,
-  };
-
-  function callback(error, response, body) {
-    if (!error && response.statusCode == 200) {
-      res.json(JSON.parse(body));
-    }
-  }
-
-  request(options, callback);
-
-})
-
+// CODE FOR ORIGIN DEST IN LON/LAT SEARCH
 // app.get('/searchtrip/:originlat/:originlon/:destinationlat/:destinationlon', (req, res) => {
 //
 //
@@ -157,6 +117,7 @@ app.get('/searchtrip/:origin/:destination' , (req, res) => {
 //
 // })
 
+// TRIP PLANNER API PROXY GET trip
 app.get('/planner/:originid/:destinationid', (req, res) => {
   const headers = {
       'Accept': 'application/json',
@@ -177,71 +138,111 @@ app.get('/planner/:originid/:destinationid', (req, res) => {
 
 });
 
+
+
 // Signing up new user
-app.post('/users', (req, res) => {
-  const {
-    username,
-    email,
-    password
-  } = req.body
-
-  // console.log(username, email, password)
-
-  const user = new User({
-    username: username,
-    email: email,
-    password: password
-  }); //new users
-
-  user.save()
-  .then( () => {
-    // calling method defined in user.js
-    return user.generateAuthToken()
-  })
-  .then(token => {
-    // send token back as http header
-    // header takes 2 arguments as key/value pairs
-    // key is header name, value is what you set header to
-    res.header('jwt_auth', token).send('user');
-  })
-  .catch(err => {
-    res.status(400).send(err)
-  });
-
-
-
-  // check('username')
-  // .isEmpty()
-  // .withMessage('empty')
-
-  //expressValidator checks
-  // req.checkBody(username, 'Name is required').notEmpty();
-  // req.checkBody(email, 'Email is required').notEmpty();
-  // req.checkBody(email, 'Email is not valid').isEmail();
-  // req.checkBody(password, 'Password is required').notEmpty();
-  // req.checkBody(confirmPassword, 'Passwords do not match').equals(password);
-
-  // var errors = req.validationErrors();
-  // console.log(errors)
-  // if (errors) {
-  //   console.log(errors)
-  // } else {
-  //   console.log('passed');
-  // }
-
-
-}); // POST to signup
-
-
-// //LOGIN
-// app.post('/users/login', (req, res) => {
+// app.post('/users', (req, res) => {
 //   const {
 //     username,
 //     email,
 //     password
 //   } = req.body
 //
-//   res.send(req.body);
+//   // console.log(username, email, password)
+//
+//   const user = new User({
+//     username: username,
+//     email: email,
+//     password: password
+//   }); //new users
+//
+//   user.save()
+//   .then( result => {
+//     console.log(result);
+//     res.status(200).json({
+//       success: 'New user has been created'
+//     });
+//   })
+//   .catch( error => {
+//     res.status(500).json({
+//       error: err
+//     });
+//   }); //user.save
+//
+// }); // POST to signup
+//
+//   // FOR REGISTER (saving JWT token to user on register and express Validator checks)
+//   // .then( () => {
+//   //   // calling method defined in user.js
+//   //   return user.generateAuthToken()
+//   // })
+//   // .then(token => {
+//   //   // send token back as http header
+//   //   // header takes 2 arguments as key/value pairs
+//   //   // key is header name, value is what you set header to
+//   //   res.header('jwt_auth', token).send('user');
+//   // })
+//   // .catch(err => {
+//   //   res.status(400).send(err)
+//   // });
+//
+//   //expressValidator checks
+//   // req.checkBody(username, 'Name is required').notEmpty();
+//   // req.checkBody(email, 'Email is required').notEmpty();
+//   // req.checkBody(email, 'Email is not valid').isEmail();
+//   // req.checkBody(password, 'Password is required').notEmpty();
+//   // req.checkBody(confirmPassword, 'Passwords do not match').equals(password);
+//
+//   // var errors = req.validationErrors();
+//   // console.log(errors)
+//   // if (errors) {
+//   //   console.log(errors)
+//   // } else {
+//   //   console.log('passed');
+//   // }
+// //LOGIN
+// app.post('/signin', (req, res) => {
+//
+//   const {
+//     username,
+//     email,
+//     password
+//   } = req.body
+//
+//   User.findOne({
+//       username: username,
+//       email: email
+//   })
+//   .exec()
+//   .then(userFound => {
+//     console.log(userFound)
+//
+//      bcrypt.compare(password, userFound.password, (err, result) => {
+//         if(err) {
+//            return res.status(401).json({
+//               failed: 'Unauthorized Access'
+//            });
+//         }
+//         if(result) {
+//            return res.status(200).json({
+//               success: 'Welcome to app'
+//            });
+//         }
+//         return res.status(401).json({
+//            failed: 'Unauthorized Access'
+//         });
+//      });
+//   })
+//   .catch(error => {
+//     console.log(error)
+//
+//      res.status(500).json({
+//         error: error
+//      });
+//   });
 //
 //
-// })
+// }) //login
+
+
+////////// END ROUTES
