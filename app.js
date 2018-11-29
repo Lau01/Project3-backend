@@ -14,7 +14,7 @@ const checkAuth = require('./middleware/auth')
 
 
 
-mongoose.connect('mongodb://127.0.0.1:27017/trip-planner', {useNewUrlParser: true});
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/trip-planner', {useNewUrlParser: true});
 mongoose.connection.on('error', error => console.log(error) );
 // mongoose.Promise = global.Promise;
 
@@ -89,55 +89,3 @@ app.get('/planner/:originid/:destinationid', (req, res) => {
   request(options, callback);
 
 });
-
-
-
-////////// END ROUTES
-
-// API PROXY GET trip planner
-
-// GOOGLE MAPS SEARCH TRIP CODE
-// app.get('/searchtrip/:origin/:destination' , (req, res) => {
-//
-//   const {
-//     origin,
-//     destination,
-//   } = req.params
-//
-//   const options = {
-//     url: `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&mode=transit&alternatives=true&region=au&key=AIzaSyBND5ksDpE8U7IRPTOobQXYIwGckHeYxRs`,
-//   };
-//
-//   function callback(error, response, body) {
-//     if (!error && response.statusCode == 200) {
-//       res.json(JSON.parse(body));
-//     }
-//   }
-//
-//   request(options, callback);
-//
-// })
-
-// CODE FOR ORIGIN DEST IN LON/LAT SEARCH
-// app.get('/searchtrip/:originlat/:originlon/:destinationlat/:destinationlon', (req, res) => {
-//
-//
-//   const headers = {
-//       'Accept': 'application/json',
-//       'Authorization': `apikey ${API_KEY}`
-//   };
-//
-//   const options = {
-//       url: `${TRIP_PLANNER_BASE}/trip?outputFormat=rapidJSON&coordOutputFormat=EPSG%3A4326&depArrMacro=dep&type_origin=coord&name_origin=${req.params.originlon}%3A${req.params.originlat}%3AEPSG%3A4326&type_destination=coord&name_destination=${req.params.destinationlat}%3A${req.params.destinationlon}%3AEPSG%3A4326&calcNumberOfTrips=6&TfNSWTR=true&version=10.2.1.42`,
-//       headers: headers
-//   };
-//
-//   function callback(error, response, body) {
-//       if (!error && response.statusCode == 200) {
-//         res.json(JSON.parse(body));
-//       }
-//   }
-//
-//   request(options, callback);
-//
-// })
