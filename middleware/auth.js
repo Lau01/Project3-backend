@@ -5,11 +5,8 @@ const User = require('../models/user');
 module.exports = (req, res, next) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
-    // req.body.token
-    // console.log({token});
-    const decoded = jwt.verify(token, 'secret123', {expiresIn: '7d'});
+    const decoded = jwt.verify(token, 'secret123', {expiresIn: '7 days'});
     req.tokenData = decoded;
-    // console.log({decoded});
 
     User.findOne({_id: req.tokenData._id})
     .exec()
