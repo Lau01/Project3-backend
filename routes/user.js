@@ -9,7 +9,9 @@ const checkAuth = require('../middleware/auth')
 const db = mongoose.connection;
 
 router.post('/signup', function(req, res) {
+  // hash password with bcrypt
    bcrypt.hash(req.body.password, 10, function(err, hash){
+     //handle error if there is one
       if(err) {
         console.log(err)
          return res.status(500).json({
@@ -17,12 +19,14 @@ router.post('/signup', function(req, res) {
          });
       }
       else {
+        // new user with submitted details in body
          const user = new User({
             _id: new mongoose.Types.ObjectId(),
             username: req.body.username,
             email: req.body.email,
             password: hash
          });
+         // save user after creating
          user.save().then(function(result) {
             console.log(result);
             // res.status(200).json({
@@ -31,13 +35,14 @@ router.post('/signup', function(req, res) {
 
             console.log('new user:', result);
 
+            //create a JWT Token for the new user
             const JWTToken = jwt.sign({
               // username: user.username,
               email: user.email,
               _id: result._id
               },
               'secret123',
-              {expiresIn: '2h'}
+              {expiresIn: '7 days'}
             );
             return res.status(200).json({
               success: 'Welcome to the app',
@@ -51,9 +56,9 @@ router.post('/signup', function(req, res) {
                error: err
             });
          });
-      }
-   });
-});
+      } // end of initial error handling
+   }); // bcrypt
+}); // signup
 
 router.post('/login', function(req, res){
    User.findOne({email: req.body.email})
@@ -72,7 +77,7 @@ router.post('/login', function(req, res){
              _id: user._id
              },
              'secret123',
-             {expiresIn: '2h'}
+             {expiresIn: '7 days'}
            );
            return res.status(200).json({
              success: 'Welcome to the app',
@@ -136,9 +141,6 @@ router.post('/deltrips', checkAuth, (req, res) => {
     { multi: true }
   )
 
-    // console.log(user.favTrips)
-    // console.log(req.body.origin)
-    // console.log(req.body.destination)
 });
 
 
