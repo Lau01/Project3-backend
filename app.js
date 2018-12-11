@@ -18,24 +18,23 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/trip-plan
 mongoose.connection.on('error', error => console.log(error) );
 // mongoose.Promise = global.Promise;
 
+
+////////////// MIDDLEWARE
 const db = mongoose.connection;
 
 app.use(cors());
-
-// app.use(expressValidator());
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
 app.use('/user', user);
-////////////// MIDDLEWARE END
+////////////////////////
 
-// listen on port 3000
+// listen on port 3000 or process.env.PORT
 app.listen(process.env.PORT || 3000, () => {
   console.log('Server started ...')
 });
 
-// const checkAuth = require('./middleware/auth')
 
 ///// ROUTES /////
 app.get('/showusers', (req, res) => {
@@ -47,7 +46,7 @@ app.get('/showusers', (req, res) => {
 const TRIP_PLANNER_BASE = 'https://api.transport.nsw.gov.au/v1/tp'
 const API_KEY = 'qyyB5ajjPGdUAXbZaELGqwpgWr03VFiQ579m'
 
-// TRIP PLANNER API PROXY GET stops
+// Trip Planner API GET stops
 app.get('/stop/:id', (req, res) => {
   const headers = {
       'Accept': 'application/json',
@@ -69,7 +68,7 @@ app.get('/stop/:id', (req, res) => {
 
 
 
-// TRIP PLANNER API PROXY GET trip
+// Trip Planner Api GET trip with origin and destination inputs from URL
 app.get('/planner/:originid/:destinationid', (req, res) => {
   const headers = {
       'Accept': 'application/json',

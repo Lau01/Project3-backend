@@ -58,11 +58,13 @@ router.post('/signup', function(req, res) {
 
 // route for logging in
 router.post('/login', function(req, res){
+  // find the user by their email
    User.findOne({email: req.body.email})
    .exec()
    .then(user => {
      // compare the entered password with stored hash password
       bcrypt.compare(req.body.password, user.password, function(err, result){
+        // if the password is not correct:
          if(err) {
             return res.status(401).json({
                failed: 'Unauthorized Access'
@@ -130,14 +132,8 @@ router.get('/favtrips', checkAuth, (req, res) => {
   })
 });
 
-// DELETE a particular favTrip
+// DELETE a particular fav Trip of the logged in user who is identified using checkAuth
 router.post('/deltrips', checkAuth, (req, res) => {
-
-  // db.collection('users').update(
-  //   { email: req.current_user.email},
-  //   { $pull: { favTrips: { origin: req.body.origin, destination: req.body.destination } } },
-  //   { multi: true }
-  // )
 
   User.findOne({email: req.current_user.email})
   .exec()
